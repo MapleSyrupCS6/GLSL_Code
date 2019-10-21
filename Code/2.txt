@@ -1,0 +1,36 @@
+
+float rand(vec2 id)
+{
+    return fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = (fragCoord*2.0 - iResolution.xy) / min(iResolution.x, iResolution.y);
+    
+    vec2 st = uv*3.0;
+    st= fract(st*2.);
+    //vec2 id = (floor(uv*2.)+0.5)/2.;
+    vec2 id = floor(uv*2.)/2.;
+   
+    
+    
+    float offs = rand(id)*60.;
+    float size = (1. + sin(iTime*5.+id.x))*0.2;
+   
+    
+    float d = distance(st, vec2(0.5, 0.5));
+	d = step(d, size);
+    
+    
+    vec3 col = vec3(0.0);
+    col = vec3(0.2 , d, 0.4);
+    
+    
+
+    // Output to screen
+    fragColor = vec4(col,1.0);
+}

@@ -1,0 +1,84 @@
+float distanceFunction(vec3 pos, float size){    //距離関数
+    
+// 	pos = abs(pos);
+//    return (pos.x+pos.y+pos.z-size)*0.57735027;
+    
+    return length(pos)-size;
+    
+}
+
+float map(vec3 pos, float size){
+    
+    pos.xzy = mod(pos.xzy, 10.) - 1.*5.;    //Modでたくさん複製している
+    
+    return distanceFunction(pos, size);
+    
+}
+
+
+vec3 normal(vec3 p, float size){    //法線の取得　　　//ヘンビブン→その点の垂直なベクトルが求まるとかなんとか　とにかく、ヘンビブンをしたら法線が求まる
+
+  vec2 e = vec2(0.0001, 0);
+  float d = distanceFunction(p, size);
+  vec3 n = d - vec3(
+    distanceFunction(p - e.xyy, size),
+    distanceFunction(p- e.yxy, size),
+    distanceFunction(p - e.yyx, size));
+  return normalize(n);
+}
+//↑これはヘンビブンをしている
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = (fragCoord*2.0 -iResolution.xy) / min(iResolution.x, iResolution.y);
+    
+    vec3 cameraPos = vec3(sin(iTime*15.)*0.3, 5.+sin(iTime)*20., -70. );   //カメラの位置
+    float screenZ = 2.5;    //スクリーン平面をどれだけカメラに近づけるか
+    vec3 rayDirection = normalize(vec3(uv, screenZ));     //rayの方向　ベクトルの長さを正規化してる。長さ１になるようにベクトりの長さを変換してる。Rayの方向を計算して、めちゃ長くなったScreenZを長さ１にしてる
+    vec3 lightDirection = normalize(vec3(1.0, 1.0, -10.));
+    
+    float size = abs(sin(iTime))*2.;   //距離関数に渡すオブジェクトのサイズ
+    float depth = 0.0;   //距離を入れる変数
+    float dist = 0.0;   //距離関数から渡ってきた値を入れる変数
+    vec3 rayPos = vec3(0.0);
+    vec3 col = vec3(0.);
+    
+    
+    
+    for(int i = 0; i < 99; i++){ 
+    
+        rayPos = cameraPos + (rayDirection * depth); //カメラポジションをRayの方向に進めてる　rayDirectionは長さが１だから、depthはRayが進んでる距離で、Depthはただの数字だから、rayDirectionをかけて方向を定めてあげて、それをカメラの位置からはっっしゃしてる
+        dist = map(rayPos, size);   //距離関数にRayのポジションを渡している
+        
+        if(dist < 0.0001){
+			
+ //        	vec3 n = normal(rayPos, size);
+ //       	vec3 c1 = vec3(0.9, 0.5, 0.7);
+  //      	vec3 c2 = vec3(0.7, 0.3, 0.7);
+  //          col = mix(c1, c2, n);   
+            break;           
+        }else{
+            
+            col = vec3(0.1, 0.9, 0.4);
+            
+        }
+        
+        
+        depth += dist;//出てきた距離をdepthに足すことでdepthが進む
+    }
+    
+    if(dist < 0.0001){
+        
+        vec3 n = normal(rayPos, size);
+        vec3 c1 = vec3(0.9, 0.5, 0.7);
+        vec3 c2 = vec3(0);
+        float diff = dot(n, lightDirection);
+        col = mix(c1, c2, n);
+        
+    }
+    
+	
+    fragColor = vec4(col,1.0);
+}
+
